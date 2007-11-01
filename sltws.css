@@ -1,0 +1,32 @@
+#canvas, #content, #buttons, #console {
+    position: absolute;
+    border-width: 1px;
+}
+#canvas {
+    top: 0%;
+    left: 0%;
+    bottom: 25%;
+    right: 50%;
+    border-style: solid;
+}
+#content {
+    top: 0%;
+    left: 50%;
+    bottom: 30%;
+    right: 0%;
+    border-style: solid solid none;
+}
+#buttons {
+    top: 70%;
+    left: 50%;
+    bottom: 25%;
+    right: 0%;
+    border-style: none solid solid;
+}
+#console {
+    top: 75%;
+    left: 0%;
+    bottom: 0%;
+    right: 0%;
+    border-style: solid;
+}
