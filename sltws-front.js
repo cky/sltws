@@ -1,8 +1,30 @@
-/* Copyright (c) 2007 C. K. Jester-Young, GPLv3 */
+/*
+ * Copyright © 2007 Chris K. Jester-Young.
+ *
+ * This file is part of Scriptlet Workshop.
+ *
+ * Scriptlet Workshop is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Scriptlet Workshop is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with Scriptlet Workshop.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-var methods = ['init', 'start', 'paint', 'stop', 'destroy'];
+var method_sigs = {
+    init: ['applet'],
+    start: ['applet'],
+    paint: ['applet', 'g'],
+    stop: ['applet'],
+    destroy: ['applet']
+};
 var default_show = 'paint';
-var extra_args = {'paint': ['g']};
 
 var canvas = document.getElementById('canvas');
 var content = document.getElementById('content');
@@ -12,10 +34,7 @@ var close_button = document.getElementById('close_button');
 var clear_button = document.getElementById('clear_button');
 
 function method_sig(name) {
-    var args = ['applet'];
-    if (extra_args[name])
-        args.push(extra_args[name]);
-    return name + '(' + args.join() + ')';
+    return name + '(' + method_sigs[name].join() + ')';
 }
 
 function radio_id(name) {
@@ -42,8 +61,8 @@ function showhide_item(name) {
 }
 
 function showhide_content() {
-    for (var i in methods)
-        showhide_item(methods[i]);
+    for (var method in method_sigs)
+        showhide_item(method);
 }
 
 function make_textnode(text) {
@@ -60,7 +79,7 @@ function make_radio(name, checked) {
     result.id = radio_id(name);
     result.name = 'method';
     result.checked = checked;
-    result.addEventListener('change', function () {showhide_content()}, false);
+    result.addEventListener('change', showhide_content, false);
     return result;
 }
 
@@ -73,19 +92,25 @@ function make_textbox(name) {
     return result;
 }
 
+function make_param(name, value) {
+    var result = document.createElement('param');
+    result.name = name;
+    result.value = value;
+    return result;
+}
+
 function make_applet(params) {
     var result = document.createElement('applet');
+    result.id = 'scriptlet';
     result.code = 'com.sun.scriptlet.Scriptlet';
     result.archive = 'scriptlet.jar';
     result.style.width = '100%';
     result.style.height = '100%';
     result.setAttribute('mayscript', 'true');
-    for (var name in params) {
-        var param = document.createElement('param');
-        param.name = name;
-        param.value = params[name];
-        result.appendChild(param);
-    }
+    result.appendChild(make_param('id', 'backend'));
+    result.appendChild(make_param('scriptsrc', 'sltws-back.js'));
+    for (var name in params)
+        result.appendChild(make_param(name, params[name]));
     return result;
 }
 
@@ -101,8 +126,8 @@ function populate_item(name) {
 }
 
 function populate_content() {
-    for (var i in methods)
-        populate_item(methods[i]);
+    for (var method in method_sigs)
+        populate_item(method);
 }
 
 function onload() {
@@ -110,16 +135,11 @@ function onload() {
     showhide_content();
 }
 
-function create_function(name) {
-    var textarea = get_textarea(name);
-    return textarea.value ? 'function ' + method_sig(name) + '{' + textarea.value + '}' : '';
-}
-
 function run_applet() {
-    var script = '';
-    for (var i in methods)
-        script += create_function(methods[i]);
-    var applet = make_applet({"script": script});
+    var params = {};
+    for (var method in method_sigs)
+        params[method] = textarea_id(method);
+    var applet = make_applet(params);
     if (canvas.hasChildNodes())
         canvas.replaceChild(applet, canvas.firstChild);
     else
@@ -137,11 +157,11 @@ function clear_field(name) {
 }
 
 function clear_fields() {
-    for (var i in methods)
-        clear_field(methods[i]);
+    for (var method in method_sigs)
+        clear_field(method);
 }
 
-document.body.addEventListener('load', function () {onload()}, false);
-run_button.addEventListener('click', function () {run_applet()}, false);
-close_button.addEventListener('click', function () {close_applet()}, false);
-clear_button.addEventListener('click', function () {clear_fields()}, false);
+document.body.addEventListener('load', onload, false);
+run_button.addEventListener('click', run_applet, false);
+close_button.addEventListener('click', close_applet, false);
+clear_button.addEventListener('click', clear_fields, false);
