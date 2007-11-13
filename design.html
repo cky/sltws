@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Scriptlet Workshop: Design rationale</title>
+        <link rel="stylesheet" type="text/css" href="sltws.css" />
+    </head>
+    <body>
+        <p>This document describes the various design decisions and known
+           limitations of Scriptlet Workshop.</p>
+        <h1 id="fundamentals">Fundamentals</h1>
+        <dl>
+            <dt>Target audience</dt>
+            <dd>Scriptlet Workshop was initially written to teach a
+                beginners' programming course at the Year 7&ndash;8 level.
+                At this age group, a very effective way to teach is just
+                by having the students cut and paste from simple programs,
+                editing them, and observing the effects thereof. The
+                structure of programming can then be built upon their
+                first-hand experiences.</dd>
+        </dl>
+        <h1 id="sysreqs">System requirements</h1>
+        <dl>
+            <dt>Java 6 requirement</dt>
+            <dd>Scriptlet Workshop requires Java 6. I have tried very hard
+                to sidestep this requirement, so that it could work in Java
+                5, but because <code>javax.script.ScriptEngineManager</code>
+                uses <code>sun.misc.Service</code>, which is not in a
+                package that untrusted applet code is allowed to access,
+                <span class="file">script-api.jar</span> would have to be
+                installed in a trusted location. Most normal users lack
+                the privileges and/or expertise required for this.</dd>
+            <dt>Non-usage of <code>BrowserJS</code></dt>
+            <dd>An applet runs in a web browser, and would be a natural
+                candidate for using the <code>BrowserJS</code> engine
+                to invoke scriptlet code. However, the scriptlet engine
+                (<code>com.sun.scriptlet.Scriptlet</code>) was not designed
+                for use with <code>BrowserJS</code>, and extensive changes
+                would be required for this to work (for example, obtaining
+                the window object would have to be done in a completely
+                different way that is not engine-agnostic).</dd>
+        </dl>
+        <h1 id="structure">Code structure</h1>
+        <p>For the purposes of this section, the <dfn>frontend code</dfn>
+           is that which is executed by the browser's JavaScript engine,
+           and the <dfn>backend code</dfn> is that which is executed by
+           the Java Runtime Environment's JavaScript engine.</p>
+        <dl>
+            <dt>Flaws in the original design</dt>
+            <dd>
+                <p>In the initial version of the program, the entirety of
+                   the backend code was dynamically generated from the
+                   contents of the textareas, and then pushed through to
+                   the scriptlet engine as a <code>param</code>. This has
+                   some notable drawbacks:</p>
+                <ol>
+                    <li>In testing with Java 6u3 and Firefox 2.0.0.9, I have
+                        encountered many cases where applet initialisation
+                        failure caused the Java Plugin to eat 100% CPU and
+                        Firefox to freeze. Thus any way to avoid allowing
+                        the applet to fail to load is highly desirable.</li>
+                    <li>Any syntax (or other) error in the textareas would
+                        cause the whole scriptlet to fail to load, with no
+                        indication of the cause other than via Java Console
+                        (which is not very user-friendly). This also does
+                        not identify for the learner where they need to
+                        find and correct the errors.</li>
+                    <li>Passing a whole script via a <code>param</code>
+                        caused newlines to be stripped off. This made
+                        single-line comments unusable, and also threw off
+                        line numbering in error messages entirely.</li>
+                </ol>
+                <p>The below items describe how I addressed these points
+                   in the updated design.</p>
+            </dd>
+            <dt>Usage of static backend</dt>
+            <dd>For robustness, I have relocated the backend code to its
+                own static file, which will parse and load successfully
+                without regard to what's in the textareas (assuming there
+                aren't any bugs left in the backend, that is).</dd>
+            <dt>Error handling</dt>
+            <dd>Rather than building one big chunk of code from the textareas,
+                the backend creates function objects for each textarea, and
+                wraps them in a <code>try</code> block so that any run-time
+                error doesn't spill out of the backend. Also, a similar
+                <code>try</code> is used around the actual creation of the
+                function objects, so that syntax errors also don't spill
+                out.</dd>
+            <dt>Newline preservation</dt>
+            <dd>Instead of passing script text in a <code>param</code>, the
+                frontend passes element IDs of the textareas that the backend
+                retrieves directly from the document object model. This also
+                opens up other possibilities, such as a button in the form
+                that allows scriptlet code (other than the <code>init</code>
+                method) to be updated without reinitialising the applet.</dd>
+        </dl>
+    </body>
+</html>

@@ -30,3 +30,10 @@
     right: 0%;
     border-style: solid;
 }
+.file {
+    font-style: italic;
+}
+dt {
+    font-weight: bold;
+    padding-top: 0.5ex;
+}
