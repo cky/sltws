@@ -17,16 +17,18 @@
  * with Scriptlet Workshop.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Backend = function () {
+function Backend() {
     this.init = this.bootstrap_init;
-};
+}
 
 Backend.prototype.method_sigs = {
     init: ['applet'],
     start: ['applet'],
     paint: ['applet', 'g'],
     stop: ['applet'],
-    destroy: ['applet']
+    destroy: ['applet'],
+    getAppletInfo: ['applet'],
+    getParameterInfo: ['applet']
 };
 
 Backend.prototype.invoke_method = function (method, func, args) {
@@ -60,7 +62,14 @@ Backend.prototype.install_applet_method = function (method, applet) {
     if (!id)
         return true;
 
-    var script = window.document.getElementById(id).value;
+    var element = window.document.getElementById(id);
+    if (!element) {
+        window.alert("Error installing method " + method
+                     + ": document element " + id + " does not exist");
+        return false;
+    }
+
+    var script = element.value;
     if (!script)
         return true;
     return this.install_method(method, script);
